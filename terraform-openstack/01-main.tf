@@ -44,7 +44,7 @@ resource "openstack_compute_instance_v2" "filonov_server" {
   name = "filonov-server-trfm"
   image_name = var.image_name
   flavor_name = var.server_flavor
-  key_pair = var.key_pair
+  key_pair =  "filonov"
   security_groups = [openstack_networking_secgroup_v2.sg.id]
 
   network {

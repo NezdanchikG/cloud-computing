@@ -1,0 +1,13 @@
+[Unit]
+Description=moviebot
+
+[Service]
+SuccessExitStatus=143
+User=ubuntu
+WorkingDirectory=/home/ubuntu
+Type=simple
+ExecStart=java -jar /home/ubuntu/moviebot.jar
+ExecStop=/bin/kill -15 $MAINPID
+
+[Install]
+WantedBy=multi-user.target

@@ -28,12 +28,12 @@
         mode: '0644'
         create: yes
 
-- name: Add instance host (Ansible term)
-  add_host:
-    name: tpb-server
-    groups: nodes
-    ansible_ssh_user: ubuntu
-    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+    - name: Add instance host (Ansible term)
+      add_host:
+        name: tpb-server
+        groups: nodes
+        ansible_ssh_user: ubuntu
+        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
 
 - name: Wait for instance creating
   hosts: localhost

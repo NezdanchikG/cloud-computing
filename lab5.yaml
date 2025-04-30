@@ -56,8 +56,14 @@
     - name: Download MongoDB GPG key
       get_url:
         url: https://pgp.mongodb.com/server-7.0.asc
-        dest: /usr/share/keyrings/mongodb-server-7.0.gpg
+        dest: /tmp/mongodb-server-7.0.asc
         mode: '0644'
+
+    - name: Convert ASCII key to binary format
+      command: >
+        gpg --dearmor -o /usr/share/keyrings/mongodb-server-7.0.gpg /tmp/mongodb-server-7.0.asc
+      args:
+        creates: /usr/share/keyrings/mongodb-server-7.0.gpg
 
     - name: Add MongoDB repository
       apt_repository:
@@ -78,6 +84,7 @@
         name: mongod
         state: started
         enabled: yes
+
 
 - name: Prepare production for deploy
   hosts: tpb-server

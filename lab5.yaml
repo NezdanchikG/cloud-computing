@@ -86,7 +86,7 @@
 - name: Prepare production for deploy
   hosts: tpb-server
   vars:
-    service_path: botserver.service
+    service_path: moviebot.service
     terraform_path: ./terraform-openstack
   tasks:
     - block:
@@ -100,7 +100,7 @@
       - name: Create bot app service
         copy:
           src: "{{ service_path }}"
-          dest: /etc/systemd/system/botserver.service
+          dest: /etc/systemd/system/moviebot.service
           mode: '0777'
         become: yes
 

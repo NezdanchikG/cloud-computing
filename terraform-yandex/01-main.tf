@@ -62,7 +62,7 @@ data "yandex_vpc_network" "existing" {
   name = "default"
 }
 
-resource "yandex_vpc_subnet" "filonov-subnet" {
+resource "yandex_vpc_subnet" "subnet-1" {
   name           = "filonov-subnet"
   zone           = "ru-central1-a"
   network_id     = data.yandex_vpc_network.existing.id

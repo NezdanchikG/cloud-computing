@@ -1,125 +1,115 @@
-- name: Create production server
+- name: Create production server on Yandex.Cloud
   hosts: localhost
   connection: local
   vars:
     terraform_rc_path: .terraformrc
     terraform_path: ./terraform-yandex
   tasks:
-    - name: Prepare TF (set yandex mirror)
+    - name: Prepare TF (set Yandex mirror)
       copy:
         src: "{{ terraform_rc_path }}"
         dest: ~/.terraformrc
 
-    - name: Run terraform
+    - name: Run terraform for Yandex.Cloud
       terraform:
         project_path: "{{ terraform_path }}"
         force_init: yes
         state: present
       register: trfrm
 
-    - name: Export server IP up
+    - name: Export server IP to file
       lineinfile:
-        path: ~/server_ip
+        path: ~/YC_SERVER_IP
         regexp: '^YC_SERVER_IP='
         line: "YC_SERVER_IP={{ trfrm.outputs.servers.value.serverip }}"
         mode: '0644'
         create: yes
 
-    - name: Add instance host (Ansible term)
+    - name: Add instance host to Ansible inventory
       add_host:
-        name: tpb-server
+        name: yandex-server
         groups: nodes
-        ansible_ssh_user: ubuntu
+        ansible_user: ubuntu
         ansible_host: "{{ trfrm.outputs.servers.value.serverip }}"
         ansible_ssh_private_key_file: ~/.ssh/id_rsa
         ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
 
-- name: Wait for instance creating
+- name: Wait for instance to become reachable
   hosts: localhost
   connection: local
-
   tasks:
-    - name: Wait for a ssh port become available
+    - name: Wait for SSH port on Yandex instance
       wait_for:
         host: "{{ trfrm.outputs.servers.value.serverip }}"
         port: 22
+        timeout: 300
 
-- name: Start production database 
-  hosts: tpb-server
+- name: Start production database on Yandex instance
+  hosts: yandex-server
   become: yes
   tasks:
-    - name: Update apt package cache
+    - name: Download MongoDB 7.0 GPG Key (ASCII)
+      get_url:
+        url: https://pgp.mongodb.com/server-7.0.asc
+        dest: /etc/apt/keyrings/mongodb-server-7.0.asc
+        mode: '0644'
+
+    - name: Convert GPG key to binary format
+      command: >
+        gpg --dearmor -o /etc/apt/keyrings/mongodb-server-7.0.gpg
+        /etc/apt/keyrings/mongodb-server-7.0.asc
+      args:
+        creates: /etc/apt/keyrings/mongodb-server-7.0.gpg
+
+    - name: Add MongoDB apt repository
+      copy:
+        dest: /etc/apt/sources.list.d/mongodb-org-7.0.list
+        content: |
+          deb [signed-by=/etc/apt/keyrings/mongodb-server-7.0.gpg]
+          https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse
+
+    - name: Update apt and install MongoDB
       apt:
         update_cache: yes
-
-    - name: Install `postgresql` server
-      apt:
-        name: postgresql
-        state: present
-      become: yes
-
-    - name: Install python wrapper for Ansible's PostgreSQL plugin
-      apt:
-        name: python3-psycopg2
+        name: mongodb-org
         state: present
 
-
-    - name: Start `postgresql` service
+    - name: Start and enable MongoDB service
       service:
-        name: postgresql
-        state: restarted
+        name: mongod
+        state: started
         enabled: yes
 
-    - name: Install setfacl tool for changing user in Ansible
-      apt:
-        name: acl
-        state: present
-
-    # https://docs.ansible.com/ansible/latest/collections/community/postgresql/postgresql_user_module.html
-    - name: Set user password
-      become_user: postgres
-      community.postgresql.postgresql_user:
-        name: postgres
-        password: 123
-
-    - name: Create database
-      become_user: postgres
-      community.postgresql.postgresql_db:
-        name: trip_planner
-        login_password: 123
-
-- name: Prepare production for deploy
-  hosts: tpb-server
+- name: Prepare production for deploy on Yandex instance
+  hosts: yandex-server
+  become: yes
   vars:
-    service_path: botserver.service
+    service_path: moviebot.service
     terraform_path: ./terraform-yandex
   tasks:
     - block:
-      - name: Install JDK
-        apt:
-          update_cache: yes
-          name: openjdk-21-jdk-headless
-          state: present
-        become: yes
+        - name: Install JDK
+          apt:
+            update_cache: yes
+            name: openjdk-21-jdk-headless
+            state: present
 
-      - name: Create bot app service
-        copy:
-          src: "{{ service_path }}"
-          dest: /etc/systemd/system/botserver.service
-          mode: '0777'
-        become: yes
+        - name: Create bot app service
+          copy:
+            src: "{{ service_path }}"
+            dest: /etc/systemd/system/moviebot.service
+            mode: '0644'
 
-      - name: Reload services
-        systemd:
-          daemon_reload: true
-          name: botserver
-          state: stopped
-        become: yes
+        - name: Reload systemd and ensure service stopped
+          systemd:
+            daemon_reload: true
+            name: moviebot
+            state: stopped
 
       rescue:
-       - name: Clean up resources in case of error
-         terraform:
-           project_path: "{{ terraform_path }}"
-           state: absent
-           targets: openstack_compute_instance_v2.oleynik_server
-         delegate_to: localhost
+        - name: Clean up resources in case of error
+          terraform:
+            project_path: "{{ terraform_path }}"
+            state: absent
+            targets: yandex_compute_instance.vm-1
+          delegate_to: localhost

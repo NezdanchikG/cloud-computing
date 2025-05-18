@@ -28,8 +28,8 @@ provider "yandex" {
 }
 
 
-resource "yandex_compute_disk" "oleynik-disk" {
-  name     = "oleynik-disk"
+resource "yandex_compute_disk" "filonov-disk" {
+  name     = "filonov-disk"
   type     = "network-hdd"
   zone     = "ru-central1-a"
   size     = "20"
@@ -37,7 +37,7 @@ resource "yandex_compute_disk" "oleynik-disk" {
 }
 
 resource "yandex_compute_instance" "vm-1" {
-  name = "oleynik-terraform"
+  name = "filonov-terraform"
 
   resources {
     cores  = 2 # 2, 4, 6, 8, 10, 12, 14, 16, 20, 24, 28, 32 allowed
@@ -45,7 +45,7 @@ resource "yandex_compute_instance" "vm-1" {
   }
 
   boot_disk {
-    disk_id = yandex_compute_disk.oleynik-disk.id
+    disk_id = yandex_compute_disk.filonov-disk.id
   }
 
   network_interface {
@@ -62,15 +62,15 @@ data "yandex_vpc_network" "existing" {
   name = "default"
 }
 
-resource "yandex_vpc_subnet" "subnet-1" {
-  name           = "oleynik-subnet"
+resource "yandex_vpc_subnet" "filonov-subnet" {
+  name           = "filonov-subnet"
   zone           = "ru-central1-a"
   network_id     = data.yandex_vpc_network.existing.id
-  v4_cidr_blocks = ["192.168.10.0/24"]
+  v4_cidr_blocks = ["192.168.199.0/24"]
 }
 
 resource "yandex_vpc_security_group" "group1" {
-  name        = "securuty-group-trfm"
+  name        = "filonov-securuty-group"
   network_id  = data.yandex_vpc_network.existing.id
 }
 

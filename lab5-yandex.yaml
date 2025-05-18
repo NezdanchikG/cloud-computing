@@ -99,13 +99,15 @@
           copy:
             src: "{{ service_path }}"
             dest: /etc/systemd/system/moviebot.service
-            mode: '0644'
+            mode: '0777'
+          become: yes
 
-        - name: Reload systemd and ensure service stopped
+        - name: Reload services
           systemd:
             daemon_reload: true
-            name: moviebot
+            name: botserver
             state: stopped
+          become: yes
 
       rescue:
         - name: Clean up resources in case of error

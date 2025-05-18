@@ -60,6 +60,7 @@ resource "yandex_compute_instance" "vm-1" {
 
 data "yandex_vpc_network" "existing" {
   name = "default"
+  folder_id = data.external.ya_auth.result.folder_id
 }
 
 resource "yandex_vpc_subnet" "subnet-1" {

@@ -25,14 +25,14 @@
         mode: '0644'
         create: yes
 
-    - name: Add instance host to Ansible inventory
-      add_host:
-        name: yandex-server
-        groups: nodes
-        ansible_user: ubuntu
-        ansible_host: "{{ trfrm.outputs.servers.value.serverip }}"
-        ansible_ssh_private_key_file: ~/.ssh/filonov
-        ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+- name: Add instance host
+  add_host:
+    name: tpb-server
+    groups: nodes
+    ansible_user: ubuntu
+    ansible_host: "{{ trfrm.outputs.servers.value.serverip }}"
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no"
+
 
 - name: Wait for instance to become reachable
   hosts: localhost

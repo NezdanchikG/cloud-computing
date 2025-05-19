@@ -82,37 +82,26 @@
         enabled: yes
 
 - name: Prepare production for deploy on Yandex instance
-  hosts: yandex-server
+  hosts: nodes
   become: yes
   vars:
-    service_path: moviebot.service
-    terraform_path: ./terraform-yandex
+    service_path: "{{ playbook_dir }}/moviebot.service"
   tasks:
-    - block:
-        - name: Install JDK
-          apt:
-            update_cache: yes
-            name: openjdk-21-jdk-headless
-            state: present
+    - name: Install JDK
+      apt:
+        update_cache: yes
+        name: openjdk-21-jdk-headless
+        state: present
 
-        - name: Create bot app service
-          copy:
-            src: "{{ service_path }}"
-            dest: /etc/systemd/system/moviebot.service
-            mode: '0777'
-          become: yes
+    - name: Create bot app service
+      copy:
+        src: "{{ service_path }}"
+        dest: /etc/systemd/system/moviebot.service
+        mode: '0644'
 
-        - name: Reload services
-          systemd:
-            daemon_reload: true
-            name: moviebot
-            state: stopped
-          become: yes
+    - name: Reload systemd and ensure moviebot is stopped
+      systemd:
+        daemon_reload: yes
+        name: moviebot
+        state: stopped
 
-      rescue:
-        - name: Clean up resources in case of error
-          terraform:
-            project_path: "{{ terraform_path }}"
-            state: absent
-            targets: yandex_compute_instance.vm-1
-          delegate_to: localhost

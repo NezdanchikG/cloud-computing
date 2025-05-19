@@ -66,8 +66,7 @@
       copy:
         dest: /etc/apt/sources.list.d/mongodb-org-7.0.list
         content: |
-          deb [signed-by=/etc/apt/keyrings/mongodb-server-7.0.gpg]
-          https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse
+          deb [signed-by=/etc/apt/keyrings/mongodb-server-7.0.gpg] https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse
 
     - name: Update apt and install MongoDB
       apt:

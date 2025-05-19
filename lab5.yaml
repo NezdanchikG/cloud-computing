@@ -107,7 +107,7 @@
       - name: Reload services
         systemd:
           daemon_reload: true
-          name: botserver
+          name: moviebot
           state: stopped
         become: yes
 

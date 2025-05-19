@@ -46,7 +46,7 @@
         timeout: 300
 
 - name: Start production database on Yandex instance
-  hosts: yandex-server
+  hosts: nodes
   become: yes
   tasks:
     - name: Download MongoDB 7.0 GPG Key (ASCII)

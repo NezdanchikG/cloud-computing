@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: moviebot-app
+  namespace: moviebot-ns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: moviebot
+  template:
+    metadata:
+      labels:
+        app: moviebot
+    spec:
+      imagePullSecrets:
+        - name: yandex-cr
+      containers:
+        - name: moviebot-app
+          image: cr.yandex/crpch5ck08lvuk41tt41/moviebot-app:latest
+          ports:
+            - containerPort: 8080
+          env:
+            # 1. Заменяем host и port, которые указаны в application.properties
+            - name: SPRING_DATA_MONGODB_HOST
+              value: "mongo"
+            - name: SPRING_DATA_MONGODB_PORT
+              value: "27017"
+
+            # 2. Дополнительно оставляем переменные для бота (если они не заданы внутри приложения иначе)
+            - name: BOT_TOKEN
+              value: "7831597483:AAHbg1xr1bOnklIHTdDZO9zZXS2gWgxqg2s"
+            - name: BOT_USERNAME
+              value: "MovieFilonov_bot"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: moviebot
+  namespace: moviebot-ns
+spec:
+  selector:
+    app: moviebot
+  ports:
+    - port: 80
+      targetPort: 8080
+  type: LoadBalancer
